@@ -1,0 +1,41 @@
+{
+  "collected_at": "2026-05-18T23:06:44.986748Z",
+  "hostname": "cat8000v",
+  "interfaces": [
+    {
+      "name": "GigabitEthernet1",
+      "admin_status": "up",
+      "oper_status": "up"
+    },
+    {
+      "name": "GigabitEthernet2",
+      "admin_status": "down",
+      "oper_status": "down"
+    },
+    {
+      "name": "GigabitEthernet3",
+      "admin_status": "down",
+      "oper_status": "down"
+    },
+    {
+      "name": "Loopback0",
+      "admin_status": "up",
+      "oper_status": "up"
+    },
+    {
+      "name": "Loopback10",
+      "admin_status": "up",
+      "oper_status": "up"
+    },
+    {
+      "name": "Loopback109",
+      "admin_status": "up",
+      "oper_status": "up"
+    },
+    {
+      "name": "VirtualPortGroup0",
+      "admin_status": "up",
+      "oper_status": "up"
+    }
+  ]
+}
