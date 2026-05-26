@@ -1,126 +1,79 @@
 # NetAuto — Network Automation & Anomaly Detection
 
-NetAuto is a Python-based network monitoring system that collects real interface state from a Cisco IOS-XE Cat8k router using NETCONF, stores historical snapshots in SQLite, detects network anomalies, generates AI-powered explanations, and displays device health in a Flask dashboard.
+NetAuto is a Python-based network monitoring system combining NETCONF-based interface monitoring from a real Cisco IOS-XE Cat8k router with a simulated 3-node eBGP network (AS65001/AS65002/AS65003) running FRRouting in Docker. Detects interface flaps, BGP session drops, and route loss automatically. Generates AI-powered explanations via Gemini API and displays everything in a unified Flask dashboard.
 
-Built as a portfolio project for software-focused network engineering, network automation, and infrastructure roles.
+Built as a portfolio project targeting software-focused network engineering roles at hyperscalers (Meta, Google, AWS).
 
-![NetAuto Dashboard](docs/dashboard.png)
+![Dashboard](docs/dashboard_v2.png)
+![BGP Routes](docs/dashboard_v2_routes.png)
 
 ## What it does
 
-- Connects to a real Cisco IOS-XE Cat8k router using NETCONF/YANG
-- Collects interface admin and operational state
-- Stores historical interface snapshots in SQLite
-- Detects interface state changes across collections
-- Detects admin-up / oper-down mismatches
-- Generates AI-powered plain-English explanations using Gemini API
-- Displays device health in an auto-refreshing Flask dashboard
-- Runs locally or inside Docker
+- Connects to a real Cisco IOS-XE Cat8k router via NETCONF/YANG (RFC 6241)
+- Collects interface admin/oper state and stores time-series data in SQLite
+- Simulates a 3-node eBGP network (AS65001/AS65002/AS65003) using FRRouting in Docker
+- Monitors 6 BGP sessions and 9 routes across all autonomous systems
+- Detects interface flaps, admin/oper mismatches, BGP session drops, and route loss
+- Generates AI-powered plain-English anomaly explanations using Google Gemini API
+- Displays unified observability in an auto-refreshing Flask dashboard
+- Fully containerized with Docker
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Device communication | NETCONF via ncclient |
-| Data format | XML/YANG |
+| Device communication | NETCONF/YANG via ncclient |
+| BGP simulation | FRRouting (FRR) in Docker |
+| BGP monitoring | Python + docker exec/vtysh |
 | Data storage | SQLite |
-| Anomaly detection | Python rule-based detection |
+| Anomaly detection | Rule-based (flaps, mismatches, session drops, route loss) |
 | AI explanations | Google Gemini API |
 | Dashboard | Flask + HTML/CSS |
-| Containerization | Docker |
+| Containerization | Docker + docker-compose |
 | Language | Python 3.12 |
 
 ## Results
 
-- Collected live interface state from a real Cisco Cat8k sandbox router
-- Stored multiple polling snapshots in a SQLite database
-- Detected interface state changes between collections
-- Detected admin-up / oper-down mismatch conditions
-- Generated plain-English troubleshooting explanations for anomalies
-- Containerized the dashboard so it can run with Docker
-
-## Quick start
-
-Requirements:
-
-- Python 3.11+
-- Docker Desktop
-- Cisco IOS-XE device or DevNet Sandbox with NETCONF enabled
-- Optional: Gemini API key for AI explanations
-
-### Run locally
-
-    git clone https://github.com/gaygysyz2003/netauto.git
-    cd netauto
-
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-
-    python3 collector/poller.py
-    python3 anomaly/detector.py
-    python3 dashboard/app.py
-
-Then open:
-
-    http://localhost:5000
-
-### Run with Docker
-
-    docker build -t netauto .
-    docker run --rm -p 5001:5000 netauto
-
-Then open:
-
-    http://localhost:5001
+- 6/6 BGP sessions established across 3 autonomous systems
+- 9 BGP best routes propagating correctly with multipath
+- Route loss anomaly detection proven: fires within one poll cycle of router failure
+- Auto-recovery detection: clears anomaly when router comes back online
+- Interface state collected from real Cisco Cat8k via NETCONF
 
 ## Project structure
 
     netauto/
-    ├── collector/
-    │   ├── poller.py
-    │   └── config.yaml
-    ├── anomaly/
-    │   ├── detector.py
-    │   └── explainer.py
-    ├── dashboard/
-    │   └── app.py
-    ├── docs/
-    │   └── dashboard.png
-    ├── Dockerfile
-    ├── requirements.txt
-    └── README.md
-
-## How NETCONF works in this project
-
-The collector connects to the router with ncclient on NETCONF port 830. It sends structured YANG/XML filters to retrieve hostname and interface state, then parses the XML response into Python data.
-
-This is different from CLI scraping because NETCONF returns structured, machine-readable data that is better suited for automation.
+    collector/
+        poller.py          # NETCONF data collection from real device
+    anomaly/
+        detector.py        # Flap + mismatch + BGP anomaly detection
+        explainer.py       # AI-powered alert explanations
+    dashboard/
+        app.py             # Unified Flask dashboard
+    bgp_lab/
+        docker-compose.yml # 3-node FRR BGP lab
+        monitor_bgp.py     # BGP session + route monitor
+        configs/           # Per-router FRR configs
+    docs/
+        dashboard_v2.png
+        dashboard_v2_routes.png
+    Dockerfile
+    requirements.txt
+    README.md
 
 ## Anomaly types detected
 
-### Interface state change
+| Type | Trigger | Layer |
+|---|---|---|
+| Interface flap | oper_status changes between polls | NETCONF |
+| Admin/oper mismatch | admin=up but oper=down | NETCONF |
+| BGP session down | state != Established | BGP |
+| Route loss | best route count drops | BGP |
 
-Detected when an interface changes operational state between collections, such as:
+## How NETCONF works in this project
 
-    GigabitEthernet1: up -> down
-
-This can indicate a physical layer issue, remote peer failure, cable issue, or device-side problem.
-
-### Admin-up / oper-down mismatch
-
-Detected when an interface is configured as administratively up but operationally down.
-
-This can indicate a failed link, unplugged cable, transceiver issue, or remote endpoint problem.
-
-## AI explanation example
-
-For each anomaly, the Gemini explainer can generate a short plain-English explanation covering:
-
-1. The likely cause
-2. What the engineer should check first
-3. The risk if unresolved
+The collector connects to the router with ncclient on NETCONF port 830. It sends structured YANG/XML filters to retrieve hostname and interface state, then parses the XML response into Python dicts. This is different from CLI scraping because NETCONF returns structured, machine-readable data better suited for automation.
 
 ## Skills demonstrated
 
-Python network automation · NETCONF/YANG · Cisco IOS-XE · XML parsing · SQLite · Anomaly detection · Flask · Docker · Git/GitHub · AI API integration
+NETCONF/YANG · eBGP · FRRouting · Python automation · Docker · SQLite · Flask · AI API integration · Linux · Git · Cisco IOS-XE · Network anomaly detection
