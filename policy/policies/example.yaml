@@ -1,0 +1,39 @@
+# BGP Route Policy Definition
+# This file defines which routes each router should advertise and accept
+
+routers:
+  router1:
+    asn: 65001
+    advertise:
+      - 192.168.1.0/24
+    accept_from:
+      - asn: 65002
+        max_prefixes: 10
+      - asn: 65003
+        max_prefixes: 10
+    communities:
+      - "65001:100"
+
+  router2:
+    asn: 65002
+    advertise:
+      - 192.168.2.0/24
+    accept_from:
+      - asn: 65001
+        max_prefixes: 10
+      - asn: 65003
+        max_prefixes: 10
+    communities:
+      - "65002:100"
+
+  router3:
+    asn: 65003
+    advertise:
+      - 192.168.3.0/24
+    accept_from:
+      - asn: 65001
+        max_prefixes: 10
+      - asn: 65002
+        max_prefixes: 10
+    communities:
+      - "65003:100"
