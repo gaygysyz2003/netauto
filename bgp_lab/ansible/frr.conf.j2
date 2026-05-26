@@ -1,0 +1,21 @@
+frr version 8.0
+frr defaults traditional
+hostname {{ item.name }}
+log syslog informational
+no ipv6 forwarding
+
+router bgp {{ item.asn }}
+ bgp router-id {{ item.router_id }}
+ no bgp ebgp-requires-policy
+{% for neighbor in item.neighbors %}
+ neighbor {{ neighbor.ip }} remote-as {{ neighbor.remote_asn }}
+{% endfor %}
+ !
+ address-family ipv4 unicast
+  network {{ item.network }}
+{% for neighbor in item.neighbors %}
+  neighbor {{ neighbor.ip }} activate
+{% endfor %}
+ exit-address-family
+
+ip route {{ item.network }} blackhole

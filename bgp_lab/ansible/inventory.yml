@@ -1,0 +1,36 @@
+all:
+  children:
+    routers:
+      hosts:
+        router1:
+          ansible_connection: community.docker.docker
+          asn: 65001
+          router_id: 172.20.0.4
+          neighbors:
+            - ip: 172.20.0.2
+              remote_asn: 65002
+            - ip: 172.20.0.3
+              remote_asn: 65003
+          network: 192.168.1.0/24
+
+        router2:
+          ansible_connection: community.docker.docker
+          asn: 65002
+          router_id: 172.20.0.2
+          neighbors:
+            - ip: 172.20.0.4
+              remote_asn: 65001
+            - ip: 172.20.0.3
+              remote_asn: 65003
+          network: 192.168.2.0/24
+
+        router3:
+          ansible_connection: community.docker.docker
+          asn: 65003
+          router_id: 172.20.0.3
+          neighbors:
+            - ip: 172.20.0.4
+              remote_asn: 65001
+            - ip: 172.20.0.2
+              remote_asn: 65002
+          network: 192.168.3.0/24

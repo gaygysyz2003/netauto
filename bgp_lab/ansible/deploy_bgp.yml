@@ -1,0 +1,76 @@
+---
+- name: Deploy BGP configuration to all routers
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    routers:
+      - name: router1
+        asn: 65001
+        router_id: 172.20.0.4
+        network: 192.168.1.0/24
+        neighbors:
+          - {ip: 172.20.0.2, remote_asn: 65002}
+          - {ip: 172.20.0.3, remote_asn: 65003}
+      - name: router2
+        asn: 65002
+        router_id: 172.20.0.2
+        network: 192.168.2.0/24
+        neighbors:
+          - {ip: 172.20.0.4, remote_asn: 65001}
+          - {ip: 172.20.0.3, remote_asn: 65003}
+      - name: router3
+        asn: 65003
+        router_id: 172.20.0.3
+        network: 192.168.3.0/24
+        neighbors:
+          - {ip: 172.20.0.4, remote_asn: 65001}
+          - {ip: 172.20.0.2, remote_asn: 65002}
+
+  tasks:
+    - name: Check BGP state before deployment
+      command: docker exec {{ item.name }} vtysh -c "show bgp summary"
+      loop: "{{ routers }}"
+      register: bgp_before
+
+    - name: Print BGP state before
+      debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ bgp_before.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Generate FRR config for each router
+      template:
+        src: frr.conf.j2
+        dest: "/tmp/frr_{{ item.name }}.conf"
+      loop: "{{ routers }}"
+
+    - name: Copy config into each router container
+      command: docker cp /tmp/frr_{{ item.name }}.conf {{ item.name }}:/etc/frr/frr.conf
+      loop: "{{ routers }}"
+      register: copy_result
+
+    - name: Reload BGP config in each router
+      command: docker exec {{ item.name }} vtysh -c "write memory"
+      loop: "{{ routers }}"
+
+    - name: Wait for BGP to converge
+      pause:
+        seconds: 10
+
+    - name: Verify BGP sessions after deployment
+      command: docker exec {{ item.name }} vtysh -c "show bgp summary"
+      loop: "{{ routers }}"
+      register: bgp_after
+
+    - name: Print BGP state after deployment
+      debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ bgp_after.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Deployment summary
+      debug:
+        msg: "BGP config deployed to {{ routers | length }} routers successfully"
