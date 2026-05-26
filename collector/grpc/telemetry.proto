@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package netauto;
+
+service TelemetryService {
+  rpc StreamBGPState (stream BGPUpdate) returns (Acknowledgement);
+  rpc GetLatestState (Empty) returns (BGPSnapshot);
+}
+
+message BGPUpdate {
+  string router      = 1;
+  string neighbor    = 2;
+  string remote_asn  = 3;
+  string state       = 4;
+  string uptime      = 5;
+  string prefixes_rx = 6;
+  string timestamp   = 7;
+}
+
+message BGPSnapshot {
+  repeated BGPUpdate updates = 1;
+}
+
+message Acknowledgement {
+  bool   success = 1;
+  string message = 2;
+}
+
+message Empty {}
