@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.db
+*.sav
+topology/network_map.html
+lib/
+.pytest_cache/
+.coverage
+.ruff_cache/
