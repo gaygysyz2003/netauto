@@ -2,12 +2,12 @@ from ncclient import manager
 import xml.etree.ElementTree as ET
 import datetime
 import sqlite3
+import os
 
-HOST     = "10.10.20.48"
-PORT     = 830
-USERNAME = "developer"
-PASSWORD = "C1sco12345"
-
+HOST     = os.environ.get("NETAUTO_HOST", "sandbox-iosxe-latest-1.cisco.com")
+PORT     = int(os.environ.get("NETAUTO_PORT", 830))
+USERNAME = os.environ["NETAUTO_USER"]
+PASSWORD = os.environ["NETAUTO_PASS"]
 DB_PATH  = "netauto.db"
 
 HOSTNAME_FILTER = """
