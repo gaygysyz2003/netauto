@@ -191,24 +191,29 @@ def detect_anomalies(db):
                 "detail": f"BGP session to {neighbor} is {state}",
             })
 
-    counts = db.execute("""
+    rows = db.execute("""
         SELECT collected_at, router, COUNT(*) as route_count
         FROM bgp_routes WHERE best = 1
         GROUP BY collected_at, router
-        ORDER BY collected_at DESC LIMIT 6
+        ORDER BY collected_at DESC
     """).fetchall()
 
-    if len(counts) >= 4:
-        latest_counts = {r: c for _, r, c in counts[:2]}
-        prev_counts   = {r: c for _, r, c in counts[2:4]}
-        for router in latest_counts:
-            if router in prev_counts:
-                if latest_counts[router] < prev_counts[router]:
-                    anomalies.append({
-                        "type":   "route_loss",
-                        "router": router,
-                        "detail": f"Best routes dropped from {prev_counts[router]} to {latest_counts[router]}",
-                    })
+    by_time = {}
+    for ts, router, count in rows:
+        by_time.setdefault(ts, {})[router] = count
+
+    timestamps = sorted(by_time.keys(), reverse=True)
+    if len(timestamps) >= 2:
+        latest_counts = by_time[timestamps[0]]
+        prev_counts   = by_time[timestamps[1]]
+        for router, count in latest_counts.items():
+            if router in prev_counts and count < prev_counts[router]:
+                anomalies.append({
+                    "type":   "route_loss",
+                    "router": router,
+                    "detail": f"Best routes dropped from {prev_counts[router]} to {count}",
+                })
+
     return anomalies
 
 def print_results(collected_at, sessions, routes, anomalies):
