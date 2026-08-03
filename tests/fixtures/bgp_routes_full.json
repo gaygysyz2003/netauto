@@ -1,0 +1,123 @@
+{
+ "vrfId": 0,
+ "vrfName": "default",
+ "tableVersion": 15,
+ "routerId": "172.20.0.4",
+ "defaultLocPrf": 100,
+ "localAS": 65001,
+ "routes": { "192.168.1.0/24": [
+  {
+    "valid":true,
+    "bestpath":true,
+    "selectionReason":"First path received",
+    "pathFrom":"external",
+    "prefix":"192.168.1.0",
+    "prefixLen":24,
+    "network":"192.168.1.0/24",
+    "version":1,
+    "metric":0,
+    "weight":32768,
+    "peerId":"(unspec)",
+    "path":"",
+    "origin":"IGP",
+    "nexthops":[
+      {
+        "ip":"0.0.0.0",
+        "hostname":"router1",
+        "afi":"ipv4",
+        "used":true
+      }
+    ]
+  }
+]
+,"192.168.2.0/24": [
+  {
+    "valid":true,
+    "pathFrom":"external",
+    "prefix":"192.168.2.0",
+    "prefixLen":24,
+    "network":"192.168.2.0/24",
+    "version":15,
+    "weight":0,
+    "peerId":"172.20.0.3",
+    "path":"65003 65002",
+    "origin":"IGP",
+    "nexthops":[
+      {
+        "ip":"172.20.0.2",
+        "hostname":"router3",
+        "afi":"ipv4",
+        "used":true
+      }
+    ]
+  },
+  {
+    "valid":true,
+    "bestpath":true,
+    "selectionReason":"AS Path",
+    "pathFrom":"external",
+    "prefix":"192.168.2.0",
+    "prefixLen":24,
+    "network":"192.168.2.0/24",
+    "version":15,
+    "metric":0,
+    "weight":0,
+    "peerId":"172.20.0.2",
+    "path":"65002",
+    "origin":"IGP",
+    "nexthops":[
+      {
+        "ip":"172.20.0.2",
+        "hostname":"router2",
+        "afi":"ipv4",
+        "used":true
+      }
+    ]
+  }
+]
+,"192.168.3.0/24": [
+  {
+    "valid":true,
+    "pathFrom":"external",
+    "prefix":"192.168.3.0",
+    "prefixLen":24,
+    "network":"192.168.3.0/24",
+    "version":3,
+    "weight":0,
+    "peerId":"172.20.0.2",
+    "path":"65002 65003",
+    "origin":"IGP",
+    "nexthops":[
+      {
+        "ip":"172.20.0.3",
+        "hostname":"router2",
+        "afi":"ipv4",
+        "used":true
+      }
+    ]
+  },
+  {
+    "valid":true,
+    "bestpath":true,
+    "selectionReason":"AS Path",
+    "pathFrom":"external",
+    "prefix":"192.168.3.0",
+    "prefixLen":24,
+    "network":"192.168.3.0/24",
+    "version":3,
+    "metric":0,
+    "weight":0,
+    "peerId":"172.20.0.3",
+    "path":"65003",
+    "origin":"IGP",
+    "nexthops":[
+      {
+        "ip":"172.20.0.3",
+        "hostname":"router3",
+        "afi":"ipv4",
+        "used":true
+      }
+    ]
+  }
+]
+ }  } 
