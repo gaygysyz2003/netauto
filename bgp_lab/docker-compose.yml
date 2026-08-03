@@ -6,6 +6,21 @@ networks:
         - subnet: 172.20.0.0/24
 
 services:
+  router1:
+    image: frrouting/frr:latest
+    platform: linux/amd64
+    container_name: router1
+    hostname: router1
+    privileged: true
+    networks:
+      bgp_net:
+        ipv4_address: 172.20.0.4
+    volumes:
+      - ./configs/router1:/etc/frr
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+
   router2:
     image: frrouting/frr:latest
     platform: linux/amd64
