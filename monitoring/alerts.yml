@@ -1,0 +1,39 @@
+groups:
+  - name: bgp
+    rules:
+      # Below Established means not passing traffic. The 30s `for` is what
+      # stops a single scrape blip from paging someone.
+      - alert: BGPSessionDown
+        expr: bgp_session_state < 6
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.router }} -> {{ $labels.neighbor }} is down"
+
+      # A flap is repeated oscillation, not one transition. rate() over a
+      # 5m window is the windowing detect_flaps never had.
+      - alert: BGPSessionFlapping
+        expr: rate(bgp_session_transitions_total[5m]) * 300 > 3
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.router }} -> {{ $labels.neighbor }} flapping"
+
+      - alert: BGPPrefixesLost
+        expr: delta(bgp_prefixes_received[5m]) < 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prefix count dropped on {{ $labels.router }}"
+
+      # If the exporter stops being scraped, everything above goes blind.
+      - alert: TelemetryExporterDown
+        expr: up{job="netauto_bgp"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "BGP telemetry exporter unreachable"

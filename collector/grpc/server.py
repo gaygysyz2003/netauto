@@ -17,6 +17,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from collector.grpc import telemetry_pb2, telemetry_pb2_grpc
+from collector import metrics
 
 DB_PATH = "netauto.db"
 PORT    = 50051
@@ -49,6 +50,11 @@ class TelemetryServicer(telemetry_pb2_grpc.TelemetryServiceServicer):
         now   = datetime.datetime.now(datetime.UTC).isoformat()
 
         for update in request_iterator:
+            now = datetime.datetime.now(datetime.UTC).isoformat()
+            metrics.record_update(
+                update.router, update.neighbor, update.remote_asn,
+                update.state, update.prefixes_rx,
+            )
             db.execute("""
                 INSERT INTO grpc_telemetry
                 (received_at, router, neighbor, remote_asn, state, uptime, prefixes_rx, client_ts)
@@ -94,6 +100,8 @@ def serve():
     telemetry_pb2_grpc.add_TelemetryServiceServicer_to_server(
         TelemetryServicer(), server
     )
+    metrics.serve_metrics(9101)
+    print("\n  Prometheus exporter on http://localhost:9101/metrics")
     server.add_insecure_port(f"[::]:{PORT}")
     server.start()
     print(f"\n  gRPC Telemetry Server listening on port {PORT}")

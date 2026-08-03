@@ -1,3 +1,4 @@
 flask
 ncclient
 google-genai
+prometheus_client==0.26.0
