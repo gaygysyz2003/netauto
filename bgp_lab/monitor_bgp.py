@@ -56,6 +56,8 @@ def vtysh(router_name, command):
         ["docker", "exec", router_name, "vtysh", "-c", command],
         capture_output=True, text=True, timeout=10
     )
+    if result.returncode != 0:
+        raise RuntimeError(f"vtysh failed on {router_name}: {result.stderr.strip()}")
     return result.stdout
 
 def parse_bgp_summary(output, router_name, local_asn):
