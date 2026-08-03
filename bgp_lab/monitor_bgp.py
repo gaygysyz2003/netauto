@@ -9,9 +9,13 @@ Run: python3 bgp_lab/monitor_bgp.py
 """
 
 import subprocess
+import sys
+import os
 import sqlite3
 import datetime
 import re
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from collector.bgp_parser import parse_bgp_summary
 import json
 
 DB_PATH = "netauto.db"
@@ -59,31 +63,6 @@ def vtysh(router_name, command):
     if result.returncode != 0:
         raise RuntimeError(f"vtysh failed on {router_name}: {result.stderr.strip()}")
     return result.stdout
-
-def parse_bgp_summary(output, router_name, local_asn):
-    """
-    Parse `show bgp summary json`.
-
-    The text output puts the Up/Down timer and the State/PfxRcd field in
-    fixed columns, and the timer is always HH:MM:SS regardless of state.
-    Any colon-based state check is therefore always true. The JSON gives
-    an explicit per-peer state key instead.
-    """
-    sessions = []
-    data = json.loads(output)
-    peers = data.get("ipv4Unicast", {}).get("peers", {})
-
-    for neighbor, peer in peers.items():
-        sessions.append({
-            "router":      router_name,
-            "local_asn":   local_asn,
-            "neighbor":    neighbor,
-            "remote_asn":  str(peer.get("remoteAs", "")),
-            "state":       peer.get("state", "Unknown"),
-            "uptime":      peer.get("peerUptime", "never"),
-            "prefixes_rx": str(peer.get("pfxRcd", 0)),
-        })
-    return sessions
 
 def parse_bgp_routes(output, router_name):
     """
