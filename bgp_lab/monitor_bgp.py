@@ -12,6 +12,7 @@ import subprocess
 import sqlite3
 import datetime
 import re
+import json
 
 DB_PATH = "netauto.db"
 
@@ -59,44 +60,26 @@ def vtysh(router_name, command):
 
 def parse_bgp_summary(output, router_name, local_asn):
     """
-    Parse lines like:
-    172.20.0.2  4  65002  8  8  0  0  0  00:02:34  2  3  N/A
+    Parse `show bgp summary json`.
+
+    The text output puts the Up/Down timer and the State/PfxRcd field in
+    fixed columns, and the timer is always HH:MM:SS regardless of state.
+    Any colon-based state check is therefore always true. The JSON gives
+    an explicit per-peer state key instead.
     """
     sessions = []
-    in_table = False
-    for line in output.split("\n"):
-        if line.strip().startswith("Neighbor"):
-            in_table = True
-            continue
-        if not in_table:
-            continue
-        line = line.strip()
-        if not line or line.startswith("Total"):
-            continue
-        parts = line.split()
-        if len(parts) < 10:
-            continue
-        neighbor   = parts[0]
-        remote_asn = parts[2]
-        uptime     = parts[8]   # e.g. 00:02:34
-        pfx_rcvd   = parts[9]   # e.g. 2
+    data = json.loads(output)
+    peers = data.get("ipv4Unicast", {}).get("peers", {})
 
-        # if uptime contains a colon it's established
-        if ":" in uptime:
-            state = "Established"
-        else:
-            state    = uptime
-            uptime   = "down"
-            pfx_rcvd = "0"
-
+    for neighbor, peer in peers.items():
         sessions.append({
             "router":      router_name,
             "local_asn":   local_asn,
             "neighbor":    neighbor,
-            "remote_asn":  remote_asn,
-            "state":       state,
-            "uptime":      uptime,
-            "prefixes_rx": pfx_rcvd,
+            "remote_asn":  str(peer.get("remoteAs", "")),
+            "state":       peer.get("state", "Unknown"),
+            "uptime":      peer.get("peerUptime", "never"),
+            "prefixes_rx": str(peer.get("pfxRcd", 0)),
         })
     return sessions
 
@@ -146,7 +129,7 @@ def collect_all(db):
         name = router["name"]
         asn  = router["asn"]
         try:
-            sessions = parse_bgp_summary(vtysh(name, "show bgp summary"), name, asn)
+            sessions = parse_bgp_summary(vtysh(name, "show bgp summary json"), name, asn)
             routes   = parse_bgp_routes(vtysh(name, "show ip bgp"), name)
 
             for s in sessions:
